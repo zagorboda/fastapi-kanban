@@ -6,7 +6,7 @@ from app.schemes.token import AccessToken
 
 class UserCreate(BaseModel):
     """
-    Models for creating user
+    Models to create user
     """
     email: EmailStr
     password: constr(min_length=7, max_length=100)
@@ -15,15 +15,22 @@ class UserCreate(BaseModel):
 
 class UserUpdate(BaseModel):
     """
-    Users are allowed to update their email and/or username
+    Model to update user email and/or username
     """
     email: Optional[EmailStr]
     username: Optional[constr(min_length=3, regex="^[a-zA-Z0-9_-]+$")]
 
 
+class InputPasswordUpdate(BaseModel):
+    """
+    Model to get new user password
+    """
+    password: constr(min_length=7, max_length=100)
+
+
 class UserPasswordUpdate(BaseModel):
     """
-    Users can change their password
+    Model to change user password
     """
     password: constr(min_length=7, max_length=100)
     salt: str
@@ -47,6 +54,6 @@ class User(BaseModel):
 
 class UserPublic(BaseModel):
     """
-    Public user information
+    Models to return public user information
     """
     username: str

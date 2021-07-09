@@ -1,12 +1,10 @@
 import pytest
-from fastapi import FastAPI
 from httpx import AsyncClient
 from sqlalchemy import create_engine
 
 from app.core import config as app_config
 from app.db.database import db
 from app.server import app
-
 
 # def status(self):
 #     return "Pool size: %d  Connections in pool: %d " \
@@ -20,6 +18,19 @@ from app.server import app
 @pytest.fixture
 def client():
     return AsyncClient(app=app, base_url="http://127.0.0.1:8000")
+
+
+sqlalchemy_engine_test = create_engine(app_config.TEST_DB_DSN)
+
+
+@pytest.fixture(autouse=True)
+async def clear_db_table():
+    yield
+    with sqlalchemy_engine_test.connect() as conn:
+        conn.execute("commit")
+        conn.execute(f"DELETE FROM users;")
+        conn.close()
+    sqlalchemy_engine_test.dispose()
 
 
 def pytest_configure(config):
@@ -47,9 +58,6 @@ def pytest_sessionstart(session):
     test_sqlalchemy_engine = create_engine(app_config.TEST_DB_DSN)
     db.create_all(bind=test_sqlalchemy_engine)
     test_sqlalchemy_engine.dispose()
-    # from app.db.models import Base
-    # Base = declarative_base()
-    # Base.metadata.create_all(bind=test_sqlalchemy_engine)
 
 
 def pytest_sessionfinish(session, exitstatus):

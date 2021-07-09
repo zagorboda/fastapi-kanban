@@ -3,8 +3,8 @@ import pytest
 
 from app.core import config as app_config
 from app.db.database import db
-from app.db.repositories import users as user_repo
-
+from app.db.repositories.users import UsersRepository
+from app.schemes import user as user_schema
 
 engine = db.with_bind(app_config.TEST_DB_DSN)
 
@@ -24,7 +24,7 @@ class TestSingUpRoute:
             response = await client.post("/api/users", content=json.dumps(payload))
             await client.aclose()
 
-            users_in_db = await user_repo.UsersRepository().get_all_users()
+            users_in_db = await UsersRepository().get_all_users()
 
         assert len(users_in_db) == 1
         assert response.status_code == 201
@@ -77,3 +77,57 @@ class TestSingUpRoute:
             await client.aclose()
 
         assert response.status_code == 422
+
+
+class TestLoginRoute:
+    async def test_valid_data(self, client):
+        async with db.with_bind(app_config.TEST_DB_DSN) as gino_engine:
+
+            await UsersRepository().register_new_user(
+                user_schema.UserCreate(**{'email': 'user@example.com', 'username': 'username', 'password': 'password'})
+            )
+
+            response = await client.post("/api/users/login/token", data={'username': 'username', 'password': 'password'})
+            await client.aclose()
+
+        assert response.status_code == 200
+        assert 'access_token' in response.json()
+        assert 'token_type' in response.json()
+
+    async def test_invalid_data(self, client):
+        async with db.with_bind(app_config.TEST_DB_DSN) as gino_engine:
+            response = await client.post("/api/users/login/token",
+                                         data={'username': 'username', 'password': 'password'})
+
+            await client.aclose()
+
+        assert response.status_code == 401
+
+
+class TestSelfRoute:
+    async def test_authenticated_user(self, client):
+        async with db.with_bind(app_config.TEST_DB_DSN) as gino_engine:
+            await UsersRepository().register_new_user(
+                user_schema.UserCreate(**{'email': 'user@example.com', 'username': 'username', 'password': 'password'})
+            )
+
+            response = await client.post("/api/users/login/token", data={'username': 'username', 'password': 'password'})
+            access_token = response.json()['access_token']
+
+            response = await client.get("/api/users/me", headers={'Authorization': f'Bearer {access_token}'})
+
+            await client.aclose()
+
+        assert response.status_code == 200
+
+    async def test_unauthenticated_user(self, client):
+        async with db.with_bind(app_config.TEST_DB_DSN) as gino_engine:
+            await UsersRepository().register_new_user(
+                user_schema.UserCreate(**{'email': 'user@example.com', 'username': 'username', 'password': 'password'})
+            )
+
+            response = await client.get("/api/users/me")
+
+            await client.aclose()
+
+        assert response.status_code == 401
