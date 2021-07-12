@@ -20,14 +20,14 @@ def client():
     return AsyncClient(app=app, base_url="http://127.0.0.1:8000")
 
 
-sqlalchemy_engine_test = create_engine(app_config.TEST_DB_DSN)
+sqlalchemy_engine_test = create_engine(app_config.TEST_DB_DSN, isolation_level='AUTOCOMMIT')
 
 
 @pytest.fixture(autouse=True)
 async def clear_db_table():
     yield
     with sqlalchemy_engine_test.connect() as conn:
-        conn.execute("commit")
+        conn.execute(f"DELETE FROM boards;")
         conn.execute(f"DELETE FROM users;")
         conn.close()
     sqlalchemy_engine_test.dispose()
@@ -47,15 +47,14 @@ def pytest_sessionstart(session):
     before performing collection and entering the run test loop.
     """
     # create test db
-    sqlalchemy_engine = create_engine(app_config.DB_DSN)
+    sqlalchemy_engine = create_engine(app_config.DB_DSN, isolation_level='AUTOCOMMIT')
 
     with sqlalchemy_engine.connect() as conn:
-        conn.execute("commit")
         conn.execute(f"CREATE DATABASE {app_config.TEST_DB_NAME};")
         conn.close()
     sqlalchemy_engine.dispose()
 
-    test_sqlalchemy_engine = create_engine(app_config.TEST_DB_DSN)
+    test_sqlalchemy_engine = create_engine(app_config.TEST_DB_DSN, isolation_level='AUTOCOMMIT')
     db.create_all(bind=test_sqlalchemy_engine)
     test_sqlalchemy_engine.dispose()
 
@@ -66,9 +65,8 @@ def pytest_sessionfinish(session, exitstatus):
     returning the exit status to the system.
     """
     # drop test db
-    sqlalchemy_engine = create_engine(app_config.DB_DSN)
+    sqlalchemy_engine = create_engine(app_config.DB_DSN, isolation_level='AUTOCOMMIT')
     with sqlalchemy_engine.connect() as conn:
-        conn.execute("commit")
         conn.execute(f"DROP DATABASE {app_config.TEST_DB_NAME}")  # WITH (FORCE);
         conn.close()
     sqlalchemy_engine.dispose()

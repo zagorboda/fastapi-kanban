@@ -32,19 +32,26 @@ async def user_login_with_email_and_password(
     form_data: OAuth2PasswordRequestForm = Depends(OAuth2PasswordRequestForm),
 ) -> AccessToken:
     user = await UsersRepository().authenticate_user(username=form_data.username, password=form_data.password)
+
     if not user:
         raise HTTPException(
             status_code=HTTP_401_UNAUTHORIZED,
             detail="Authentication was unsuccessful.",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    access_token = AccessToken(access_token=auth_service.create_access_token_for_user(user=user_schema.User(**user.to_dict())), token_type="bearer")
+
+    access_token = AccessToken(
+        access_token=auth_service.create_access_token_for_user(user=user_schema.User(**user.to_dict())),
+        token_type="bearer"
+    )
+
     return access_token
 
 
 @router.get("/user/{username}", response_model=user_schema.UserPublic, name="user:get-user-by-username")
 async def get_user_by_username(username: str = Path(..., min_length=3, regex="^[a-zA-Z0-9_-]+$")) -> user_schema.User:
     user = await UsersRepository().get_user_by_username(username)
+
     if user is None:
         raise HTTPException(status_code=404)
     return user_schema.User(**user.to_dict())
@@ -70,12 +77,12 @@ async def update_own_profile(
     try:
         updated_user = await UsersRepository().update_profile(profile_update=profile_update, current_user=current_user)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail=str(e))
 
     return user_schema.User(**updated_user.to_dict())
 
 
-@router.patch("/me/password_update", name="profiles:update-own-password", status_code=200)
+@router.patch("/me/password_update", name="profiles:update-own-password", status_code=HTTP_200_OK)
 async def update_password(
     password_update: user_schema.InputPasswordUpdate = Body(..., embed=True),
     current_user: user_schema.User = Depends(get_current_active_user)

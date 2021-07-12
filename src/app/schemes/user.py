@@ -1,7 +1,7 @@
 from typing import Optional
 from pydantic import BaseModel, EmailStr, constr
 
-from app.schemes.token import AccessToken
+# from app.schemes.token import AccessToken
 
 
 class UserCreate(BaseModel):

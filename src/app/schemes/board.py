@@ -1,21 +1,29 @@
-from typing import List
-from pydantic import BaseModel
-
-from .user import User
+from typing import List, Optional
+from pydantic import BaseModel,  constr
 
 
 class BoardBase(BaseModel):
-    title: str
+    """
+    Base model
+    """
+    title: constr(min_length=1, max_length=100)
 
 
 class Board(BoardBase):
+    """
+    Model to return board's information
+    """
     id: int
     owner_id: int
-    users: List[User] = []
+    public: bool
+    # users: List[User] = []
 
     class Config:
         orm_mode = True
 
 
 class BoardCreate(BoardBase):
-    pass
+    """
+    Model to create new board
+    """
+    public: Optional[bool] = False

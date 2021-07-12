@@ -6,19 +6,13 @@ from app.db.database import db
 from app.db.repositories.users import UsersRepository
 from app.schemes import user as user_schema
 
-engine = db.with_bind(app_config.TEST_DB_DSN)
-
-
-def get_engine():
-    return engine
-
 
 pytestmark = pytest.mark.asyncio
 
 
 class TestSingUp:
     async def test_with_valid_data(self, client):
-        payload = {'new_user': {'email': 'user@example.com', 'username': 'username', 'password': 'fake_password'}}
+        payload = {'new_user': {'email': 'user@example.com', 'username': 'username', 'password': 'password'}}
 
         async with db.with_bind(app_config.TEST_DB_DSN):
             response = await client.post("/api/users", content=json.dumps(payload))
@@ -30,7 +24,7 @@ class TestSingUp:
         assert response.status_code == 201
 
     async def test_with_invalid_username(self, client):
-        payload = {'new_user': {'email': 'user@example.com', 'username': 'ab', 'password': 'fake_password'}}
+        payload = {'new_user': {'email': 'user@example.com', 'username': 'ab', 'password': 'password'}}
 
         async with db.with_bind(app_config.TEST_DB_DSN):
             response = await client.post("/api/users", content=json.dumps(payload))
@@ -39,7 +33,7 @@ class TestSingUp:
         assert response.status_code == 422
 
     async def test_with_invalid_email(self, client):
-        payload = {'new_user': {'email': 'invalid.com', 'username': 'username', 'password': 'fake_password'}}
+        payload = {'new_user': {'email': 'invalid.com', 'username': 'username', 'password': 'password'}}
 
         async with db.with_bind(app_config.TEST_DB_DSN):
             response = await client.post("/api/users", content=json.dumps(payload))
@@ -48,8 +42,8 @@ class TestSingUp:
         assert response.status_code == 422
 
     async def test_with_duplicate_email(self, client):
-        payload1 = {'new_user': {'email': 'user@example.com', 'username': 'username', 'password': 'fake_password'}}
-        payload2 = {'new_user': {'email': 'user@example.com', 'username': 'username1', 'password': 'fake_password'}}
+        payload1 = {'new_user': {'email': 'user@example.com', 'username': 'username', 'password': 'password'}}
+        payload2 = {'new_user': {'email': 'user@example.com', 'username': 'username1', 'password': 'password'}}
 
         async with db.with_bind(app_config.TEST_DB_DSN):
             await client.post("/api/users", content=json.dumps(payload1))
@@ -59,8 +53,8 @@ class TestSingUp:
         assert response.status_code == 400
 
     async def test_with_duplicate_username(self, client):
-        payload1 = {'new_user': {'email': 'user1@example.com', 'username': 'username', 'password': 'fake_password'}}
-        payload2 = {'new_user': {'email': 'user2@example.com', 'username': 'username', 'password': 'fake_password'}}
+        payload1 = {'new_user': {'email': 'user1@example.com', 'username': 'username', 'password': 'assword'}}
+        payload2 = {'new_user': {'email': 'user2@example.com', 'username': 'username', 'password': 'password'}}
 
         async with db.with_bind(app_config.TEST_DB_DSN):
             await client.post("/api/users", content=json.dumps(payload1))

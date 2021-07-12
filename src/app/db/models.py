@@ -34,11 +34,11 @@ class Card(db.Model):
     list_id = Column(Integer, ForeignKey("lists.id"))
     list = relationship("List", backref="cards")
 
-    last_change_user_id = Column(Integer, ForeignKey("users.id"))
-    last_change_user = relationship("User", backref="cards", foreign_keys=[last_change_user_id])
+    last_change_by_id = Column(Integer, ForeignKey("users.id"))
+    last_change_by = relationship("User", backref="cards", foreign_keys=[last_change_by_id])
 
-    owner_id = Column(Integer, ForeignKey("users.id"))
-    owner = relationship("User", backref="card", foreign_keys=[owner_id])
+    created_by_id = Column(Integer, ForeignKey("users.id"))
+    created_by = relationship("User", backref="card", foreign_keys=[created_by_id])
 
 
 class List(db.Model):
@@ -50,15 +50,15 @@ class List(db.Model):
     board_id = Column(Integer, ForeignKey("boards.id"))
     board = relationship("Board", backref="lists")
 
-    owner_id = Column(Integer, ForeignKey("users.id"))
-    owner = relationship("User", backref="lists")
+    created_by_id = Column(Integer, ForeignKey("users.id"))
+    created_by = relationship("User", backref="lists")
 
 
 board_users = db.Table(
     'board_users',
     db,
-    db.Column('board_id', db.Integer, db.ForeignKey('boards.id')),
-    db.Column('user_id', db.Integer, db.ForeignKey('users.id'))
+    db.Column('board_id', db.Integer, db.ForeignKey('boards.id'), nullable=False),
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), nullable=False)
 )
 
 
@@ -69,7 +69,9 @@ class Board(db.Model):
     title = Column(String, nullable=False)
     public = Column(Boolean, nullable=False, default=False)
 
-    owner_id = Column(Integer, ForeignKey("users.id"))
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     owner = relationship("User", backref="boards")
+
+    created_at = Column(DateTime, nullable=False, default=datetime.datetime.now())
 
     # users = relationship("User", secondary=board_users)
