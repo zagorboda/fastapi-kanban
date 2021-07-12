@@ -46,7 +46,7 @@ async def user_login_with_email_and_password(
 async def get_user_by_username(username: str = Path(..., min_length=3, regex="^[a-zA-Z0-9_-]+$")) -> user_schema.User:
     user = await UsersRepository().get_user_by_username(username)
     if user is None:
-        return None
+        raise HTTPException(status_code=404)
     return user_schema.User(**user.to_dict())
 
 
@@ -61,7 +61,7 @@ async def register_new_user(new_user: user_schema.UserCreate = Body(..., embed=T
     return user_schema.User(**created_user.to_dict(), access_token=access_token)
 
 
-@router.put("/me/", name="profiles:update-own-profile")
+@router.patch("/me/", name="profiles:update-own-profile")
 async def update_own_profile(
     profile_update: user_schema.UserUpdate = Body(..., embed=True),
     current_user: user_schema.User = Depends(get_current_active_user)
@@ -75,9 +75,10 @@ async def update_own_profile(
     return user_schema.User(**updated_user.to_dict())
 
 
-@router.put("/me/password_update", name="profiles:update-own-password")
+@router.patch("/me/password_update", name="profiles:update-own-password", status_code=200)
 async def update_password(
     password_update: user_schema.InputPasswordUpdate = Body(..., embed=True),
     current_user: user_schema.User = Depends(get_current_active_user)
-) -> user_schema.User:
-    return await UsersRepository().update_password(current_user=current_user, password_update=password_update)
+):
+    await UsersRepository().update_password(current_user=current_user, password_update=password_update)
+    return {'message': 'Password updated'}
