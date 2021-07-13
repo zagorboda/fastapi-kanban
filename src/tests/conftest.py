@@ -28,6 +28,7 @@ async def clear_db_table():
     yield
     with sqlalchemy_engine_test.connect() as conn:
         conn.execute(f"DELETE FROM boards;")
+        conn.execute(f"DELETE FROM board_users;")
         conn.execute(f"DELETE FROM users;")
         conn.close()
     sqlalchemy_engine_test.dispose()

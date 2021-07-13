@@ -143,3 +143,47 @@ class TestGetAll:
 
         assert response.status_code == 200
         assert response.json() == []
+
+    async def test_list(self, client):
+        async with db.with_bind(app_config.TEST_DB_DSN):
+            user_payload = {'email': 'user@example.com', 'username': 'username', 'password': 'password'}
+            user = await UsersRepository().register_new_user(
+                user_schema.UserCreate(**user_payload)
+            )
+
+            for i in range(3):
+                await BoardsRepository().create_new_board(
+                    board=board_schema.BoardCreate(**{'title': f'test{i}', 'public': True}),
+                    owner=user
+                )
+
+            response = await client.get(
+                "/api/boards"
+            )
+
+            await client.aclose()
+
+        assert response.status_code == 200
+        assert len(response.json()) == 3
+
+    async def test_list_with_different_public_boards(self, client):
+        async with db.with_bind(app_config.TEST_DB_DSN):
+            user_payload = {'email': 'user@example.com', 'username': 'username', 'password': 'password'}
+            user = await UsersRepository().register_new_user(
+                user_schema.UserCreate(**user_payload)
+            )
+
+            for i in range(5):
+                await BoardsRepository().create_new_board(
+                    board=board_schema.BoardCreate(**{'title': f'test{i}', 'public': i % 2}),
+                    owner=user
+                )
+
+            response = await client.get(
+                "/api/boards"
+            )
+
+            await client.aclose()
+
+        assert response.status_code == 200
+        assert len(response.json()) == 2

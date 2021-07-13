@@ -17,8 +17,11 @@ class BoardsRepository:
         return await models.Board.create(**board.dict(), **{'owner_id': owner.id})
 
     async def get_all_public_boards(self, *, offset=0, limit=25):
+        if not limit:
+            limit = 25
+
         async with db.transaction():
-            cursor = await models.Board.query.gino.iterate()
+            cursor = await models.Board.query.where(models.Board.public == True).gino.iterate()
             if offset:
                 await cursor.forward(offset)
             boards = await cursor.many(limit)
