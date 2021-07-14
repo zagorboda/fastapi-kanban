@@ -12,6 +12,7 @@ config = Config(env_path)
 PROJECT_NAME = "Kanban"
 VERSION = "1.0.0"
 API_PREFIX = "/api"
+BASE_URL = 'http://127.0.0.1:8000'
 
 
 # openssl rand -hex 32

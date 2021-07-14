@@ -1,5 +1,6 @@
-from typing import List, Optional
+from datetime import datetime
 from pydantic import BaseModel,  constr
+from typing import List, Optional
 
 
 class BoardBase(BaseModel):
@@ -16,7 +17,21 @@ class Board(BoardBase):
     id: int
     owner_id: int
     public: bool
-    # users: List[User] = []
+    url: Optional[str]
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+
+
+class BoardList(BoardBase):
+    """
+    Model to return list of boards
+    """
+    id: int
+    owner_id: int
+    public: bool
+    url: str
 
     class Config:
         orm_mode = True

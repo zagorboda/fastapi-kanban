@@ -7,7 +7,7 @@ from app.db.database import db
 
 
 def get_application():
-    app = FastAPI(title="API", version="1.0.0")
+    app = FastAPI(title=config.PROJECT_NAME, version=config.VERSION)
 
     db.init_app(app)
 
@@ -18,7 +18,7 @@ def get_application():
         allow_methods=["*"],
         allow_headers=["*"]
     )
-    app.include_router(api_router, prefix="/api")
+    app.include_router(api_router, prefix=config.API_PREFIX)
 
     return app
 
