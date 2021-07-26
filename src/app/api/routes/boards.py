@@ -15,7 +15,7 @@ from starlette.status import (
 from pydantic import parse_obj_as
 
 from app.db.models import User
-from app.db.repositories.boards import BoardsRepository
+from app.db.repositories.boards import board_repo
 from app.dependencies.auth import get_current_active_user, get_user_from_token, get_current_or_unauthenticated_user
 from app.schemes import board as board_schema
 
@@ -30,14 +30,12 @@ async def create_new_board(
     current_user: User = Depends(get_current_active_user),
     board: board_schema.BoardCreate = Body(..., embed=True),
 ) -> board_schema.Board:
-    board = await BoardsRepository().create_new_board(board=board, owner=current_user)
+    board = await board_repo.create_new_board(board=board, owner=current_user)
     return board_schema.Board(**board.to_dict())
 
 
 @router.get("/", name="board:get-all-public-boards")
 async def get_all(offset: int = 0, limit: int = 25):
-    board_repo = BoardsRepository()
-
     boards = await board_repo.get_all_public_boards(offset=offset, limit=limit)
 
     response = []
@@ -55,10 +53,7 @@ async def get_all(offset: int = 0, limit: int = 25):
 
 @router.get("/me", name="board:get-my-boards")
 async def get_all(request: Request, current_user: User = Depends(get_current_active_user), offset: int = 0, limit: int = 25):
-    print(request.headers)
-    board_repo = BoardsRepository()
-
-    boards = await BoardsRepository().get_my_boards(user=current_user, offset=offset, limit=limit)
+    boards = await board_repo.get_my_boards(user=current_user, offset=offset, limit=limit)
 
     response = []
 
@@ -76,7 +71,6 @@ async def get_all(request: Request, current_user: User = Depends(get_current_act
 @router.get("/{id}", name="board:get-board-by-id")
 async def get_board(id: int, request: Request, current_user: User = Depends(get_current_or_unauthenticated_user)): # current_user: User = Depends(get_user_from_token)
     # get board from db
-    board_repo = BoardsRepository()
     board = await board_repo.get_board(id)
 
     # raise not found

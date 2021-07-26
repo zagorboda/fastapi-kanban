@@ -39,3 +39,6 @@ class BoardsRepository:
                 await cursor.forward(offset)
             boards = await cursor.many(limit)
         return boards
+
+
+board_repo = BoardsRepository()

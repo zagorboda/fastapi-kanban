@@ -80,3 +80,6 @@ class UsersRepository:
         await current_user.update(**dict(updated_password_and_salt)).apply()
 
         return current_user
+
+
+user_repo = UsersRepository()

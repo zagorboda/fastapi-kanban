@@ -10,7 +10,7 @@ from starlette.status import (
     HTTP_422_UNPROCESSABLE_ENTITY,
 )
 
-from app.db.repositories.users import UsersRepository
+from app.db.repositories.users import user_repo
 from app.db.models import User
 from app.dependencies.auth import get_current_active_user
 from app.schemes import user as user_schema
@@ -31,7 +31,7 @@ async def get_currently_authenticated_user(current_user: User = Depends(get_curr
 async def user_login_with_email_and_password(
     form_data: OAuth2PasswordRequestForm = Depends(OAuth2PasswordRequestForm),
 ) -> AccessToken:
-    user = await UsersRepository().authenticate_user(username=form_data.username, password=form_data.password)
+    user = await user_repo.authenticate_user(username=form_data.username, password=form_data.password)
 
     if not user:
         raise HTTPException(
@@ -50,7 +50,7 @@ async def user_login_with_email_and_password(
 
 @router.get("/user/{username}", response_model=user_schema.UserPublic, name="user:get-user-by-username")
 async def get_user_by_username(username: str = Path(..., min_length=3, regex="^[a-zA-Z0-9_-]+$")) -> user_schema.User:
-    user = await UsersRepository().get_user_by_username(username)
+    user = await user_repo.get_user_by_username(username)
 
     if user is None:
         raise HTTPException(status_code=404)
@@ -59,7 +59,7 @@ async def get_user_by_username(username: str = Path(..., min_length=3, regex="^[
 
 @router.post("/", response_model=user_schema.User, name="users:register-new-user", status_code=HTTP_201_CREATED)
 async def register_new_user(new_user: user_schema.UserCreate = Body(..., embed=True)) -> user_schema.User:
-    created_user = await UsersRepository().register_new_user(new_user)
+    created_user = await user_repo.register_new_user(new_user)
 
     access_token = AccessToken(
         access_token=auth_service.create_access_token_for_user(user=user_schema.User(**created_user.to_dict())), token_type="bearer"
@@ -75,7 +75,7 @@ async def update_own_profile(
 ) -> user_schema.User:
 
     try:
-        updated_user = await UsersRepository().update_profile(profile_update=profile_update, current_user=current_user)
+        updated_user = await user_repo.update_profile(profile_update=profile_update, current_user=current_user)
     except ValueError as e:
         raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail=str(e))
 
@@ -87,5 +87,5 @@ async def update_password(
     password_update: user_schema.InputPasswordUpdate = Body(..., embed=True),
     current_user: user_schema.User = Depends(get_current_active_user)
 ):
-    await UsersRepository().update_password(current_user=current_user, password_update=password_update)
+    await user_repo.update_password(current_user=current_user, password_update=password_update)
     return {'message': 'Password updated'}
