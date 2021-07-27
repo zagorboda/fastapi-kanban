@@ -22,6 +22,17 @@ class User(db.Model):
     is_superuser = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, nullable=False, default=datetime.datetime.now())
 
+    def __init__(self, **kw):
+        super().__init__(**kw)
+        self._boards = set()
+
+    @property
+    def boards(self):
+        return self._boards
+
+    def add_board(self, board):
+        self._boards.add(board)
+
 
 class Card(db.Model):
     __tablename__ = "cards"
@@ -74,4 +85,19 @@ class Board(db.Model):
 
     created_at = Column(DateTime, nullable=False, default=datetime.datetime.now())
 
+    def __init__(self, **kw):
+        super().__init__(**kw)
+        self._users = set()
+
+    @property
+    def users(self):
+        return self._users
+
+    def add_user(self, user):
+        self._users.add(user)
+        user._boards.add(self)
+
     # users = relationship("User", secondary=board_users)
+
+
+

@@ -12,12 +12,13 @@ from starlette.status import (
     HTTP_422_UNPROCESSABLE_ENTITY,
 )
 
-from pydantic import parse_obj_as
+# from pydantic import parse_obj_as
 
-from app.db.models import User
+from app.db.models import User, Board, board_users
 from app.db.repositories.boards import board_repo
 from app.dependencies.auth import get_current_active_user, get_user_from_token, get_current_or_unauthenticated_user
 from app.schemes import board as board_schema
+from app.schemes import user as user_schema
 
 
 router = APIRouter(prefix="/boards", tags=["boards"])
@@ -38,6 +39,14 @@ async def create_new_board(
 async def get_all(offset: int = 0, limit: int = 25):
     boards = await board_repo.get_all_public_boards(offset=offset, limit=limit)
 
+    # query = Board.outerjoin(board_users).outerjoin(User).select()
+    # boards = await query.gino.load(
+    #     Board.distinct(Board.id).load(add_user=User.distinct(User.id))).all()
+
+    # query = User.outerjoin(board_users).outerjoin(Board).select()
+    # users = await query.gino.load(
+    #     User.distinct(User.id).load(add_user=Board.distinct(Board.id))).all()
+
     response = []
 
     for board in boards:
@@ -53,6 +62,7 @@ async def get_all(offset: int = 0, limit: int = 25):
 
 @router.get("/me", name="board:get-my-boards")
 async def get_all(request: Request, current_user: User = Depends(get_current_active_user), offset: int = 0, limit: int = 25):
+
     boards = await board_repo.get_my_boards(user=current_user, offset=offset, limit=limit)
 
     response = []
@@ -86,13 +96,31 @@ async def get_board(id: int, request: Request, current_user: User = Depends(get_
         **{'url': await board_repo.get_board_url(board.id)}
     )
 
+    query = User.outerjoin(board_users).outerjoin(Board).select()
+    db_users = await query.gino.load(
+        User.distinct(User.id).load(add_user=Board.distinct(Board.id))).all()
+
+    response_users = []
+
+    for user in db_users:
+        response_users.append(
+            user_schema.UserPublic(
+                **user.to_dict()
+            )
+        )
+
+    response = {
+        'board': board,
+        'board_users': response_users
+    }
+
     # check if board is public
     if board.public:
-        return board
+        return response
 
     # check if user authenticated and user is board owner
     if current_user and current_user.id == board.owner_id:
-        return board
+        return response
 
     # user not authenticated or not owner
     raise HTTPException(
