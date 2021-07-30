@@ -2,7 +2,9 @@ from typing import Optional, Union
 
 
 from fastapi import Depends, HTTPException, Request
+from fastapi.exceptions import HTTPException
 from fastapi.security import OAuth2PasswordBearer
+from fastapi.security.utils import get_authorization_scheme_param
 
 from starlette.status import (
     HTTP_401_UNAUTHORIZED,
@@ -46,22 +48,15 @@ def get_current_active_user(current_user: User = Depends(get_user_from_token)) -
     return current_user
 
 
-async def get_current_or_unauthenticated_user(request: Request) -> Union[None, User]:
+async def get_current_active_or_unauthenticated_user(request: Request) -> Union[None, User]:
     """
     Return user object if request user if authenticated, else return none.
     """
-    if "Authorization" not in request.headers:
+    authorization = request.headers.get("Authorization")
+    scheme, token = get_authorization_scheme_param(authorization)
+
+    if not authorization or scheme.lower() != "bearer":
         return None
-
-    auth = request.headers["Authorization"]
-    scheme, token = auth.split()
-
-    if scheme.lower() != 'bearer':
-        raise HTTPException(
-            status_code=HTTP_401_UNAUTHORIZED,
-            detail="Invalid token scheme",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
 
     username = auth_service.get_username_from_token(token=token, secret_key=str(SECRET_KEY))
 

@@ -13,7 +13,7 @@ class User(db.Model):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, nullable=False)
+    email = Column(String, index=True, unique=True, nullable=False)
     email_verified = Column(Boolean, default=True, nullable=False)
     username = Column(String, index=True, nullable=False, unique=True)
     password = Column(String, nullable=False)
@@ -65,12 +65,12 @@ class List(db.Model):
     created_by = relationship("User", backref="lists")
 
 
-board_users = db.Table(
-    'board_users',
-    db,
-    db.Column('board_id', db.Integer, db.ForeignKey('boards.id'), nullable=False),
-    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), nullable=False)
-)
+# TODO: add indexes
+class BoardUsers(db.Model):
+    __tablename__ = 'board_users'
+
+    board_id = Column(Integer, ForeignKey('boards.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
 
 
 class Board(db.Model):

@@ -19,6 +19,7 @@ class Board(BoardBase):
     public: bool
     url: Optional[str]
     created_at: datetime
+    collaborators_url: Optional[str]
 
     class Config:
         orm_mode = True

@@ -1,8 +1,6 @@
 from typing import Optional
 from pydantic import BaseModel, EmailStr, constr
 
-# from app.schemes.token import AccessToken
-
 
 class UserCreate(BaseModel):
     """
@@ -45,8 +43,6 @@ class User(BaseModel):
     is_superuser: bool = False
     username: str
     email: EmailStr
-    # access_token: Optional[AccessToken]
-    # boards: "List[Board]" = []
 
     class Config:
         orm_mode = True
