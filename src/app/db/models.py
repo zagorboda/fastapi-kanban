@@ -58,6 +58,7 @@ class List(db.Model):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
 
+    # TODO: null value in fk
     board_id = Column(Integer, ForeignKey("boards.id"))
     board = relationship("Board", backref="lists")
 

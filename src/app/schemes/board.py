@@ -1,4 +1,3 @@
-from datetime import datetime
 from pydantic import BaseModel,  constr
 from typing import List, Optional
 
@@ -18,7 +17,6 @@ class Board(BoardBase):
     owner_id: int
     public: bool
     url: Optional[str]
-    created_at: datetime
     collaborators_url: Optional[str]
 
     class Config:
