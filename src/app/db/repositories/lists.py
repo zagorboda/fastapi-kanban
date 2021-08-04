@@ -8,6 +8,9 @@ class ListsRepository:
     async def get_list_url(self, board_id: int, list_id: int):
         return f'{config.BASE_URL}{config.API_PREFIX}/boards/{board_id}/lists/{list_id}'
 
+    async def get_cards_url(self, board_id: int, list_id: int):
+        return f'{config.BASE_URL}{config.API_PREFIX}/boards/{board_id}/lists/{list_id}/cards'
+
     async def get_list_by_id(self, list_id: int):
         return await models.List.get(list_id)
 

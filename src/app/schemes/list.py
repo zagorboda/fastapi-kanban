@@ -17,8 +17,8 @@ class ListModel(ListBase):
     """
     id: int
     created_by_id: int
-    created_at: datetime
     url: Optional[str]
+    cards_url: Optional[str]
 
     class Config:
         orm_mode = True
