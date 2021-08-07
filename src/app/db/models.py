@@ -13,32 +13,38 @@ class User(db.Model):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
+
     email = Column(String, index=True, unique=True, nullable=False)
-    email_verified = Column(Boolean, default=True, nullable=False)
     username = Column(String, index=True, nullable=False, unique=True)
+
+    email_verified = Column(Boolean, default=True, nullable=False)
     password = Column(String, nullable=False)
     salt = Column(String, nullable=False)
+
     is_active = Column(Boolean, default=True, nullable=False)
     is_superuser = Column(Boolean, default=False, nullable=False)
+
     created_at = Column(DateTime, nullable=False, default=datetime.datetime.now())
 
     def __init__(self, **kw):
         super().__init__(**kw)
-        self._boards = set()
+        self._boards = list()
 
     @property
     def boards(self):
         return self._boards
 
     def add_board(self, board):
-        self._boards.add(board)
+        self._boards.append(board)
 
 
 class Card(db.Model):
     __tablename__ = "cards"
 
     id = Column(Integer, primary_key=True, index=True)
-    text = Column(Text, nullable=False)
+    title = Column(Text, nullable=False)
+    description = Column(Text)
+
     created_at = Column(DateTime, nullable=False, default=datetime.datetime.now())
     last_change_at = Column(DateTime, nullable=False, default=datetime.datetime.now())
 
@@ -47,9 +53,6 @@ class Card(db.Model):
 
     last_change_by_id = Column(Integer, ForeignKey("users.id"))
     last_change_by = relationship("User", backref="cards", foreign_keys=[last_change_by_id])
-
-    created_by_id = Column(Integer, ForeignKey("users.id"))
-    created_by = relationship("User", backref="card", foreign_keys=[created_by_id])
 
 
 class List(db.Model):
@@ -88,15 +91,15 @@ class Board(db.Model):
 
     def __init__(self, **kw):
         super().__init__(**kw)
-        self._users = set()
+        self._users = list()
 
     @property
     def users(self):
         return self._users
 
     def add_user(self, user):
-        self._users.add(user)
-        user._boards.add(self)
+        self._users.append(user)
+        # user._boards.append(self)
 
     # users = relationship("User", secondary=board_users)
 

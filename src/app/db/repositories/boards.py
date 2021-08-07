@@ -15,6 +15,19 @@ class BoardsRepository:
     async def get_board_collaborators_url(self, board_id: int):
         return f'{config.BASE_URL}{config.API_PREFIX}/boards/{board_id}/users'
 
+    async def get_board_collaborators(self, *, board_id: int):
+        query = models.User.outerjoin(models.BoardUsers).outerjoin(models.Board).select().where(models.Board.id == board_id)
+
+        users = await query.gino.load(
+            models.User.distinct(models.User.id).load(
+                add_board=models.Board.distinct(models.Board.id).load(
+                    add_user=models.User.distinct(models.User.id)
+                )
+            )
+        ).all()
+
+        return users
+
     async def check_user_is_board_collaborator(self, *, board_id: int, user_id: int):
         board_users_record = await models.BoardUsers.query.where(
             models.BoardUsers.board_id == board_id and

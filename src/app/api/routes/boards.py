@@ -8,9 +8,9 @@ from starlette.status import (
     HTTP_404_NOT_FOUND,
 )
 
-# from pydantic import parse_obj_as
+from pydantic import parse_obj_as
 
-from app.db.models import User, Board, BoardUsers
+from app.db import models
 from app.db.repositories.boards import board_repo
 from app.dependencies.auth import get_current_active_user, get_user_from_token, get_current_active_or_unauthenticated_user
 from app.schemes import board as board_schema
@@ -24,7 +24,7 @@ router = APIRouter(prefix="/boards", tags=["boards"])
 
 @router.post("/", name="board:create-new-board", status_code=HTTP_201_CREATED, response_model=board_schema.Board)
 async def create_new_board(
-    current_user: User = Depends(get_current_active_user),
+    current_user: models.User = Depends(get_current_active_user),
     board: board_schema.BoardCreate = Body(..., embed=True),
 ) -> board_schema.Board:
     board = await board_repo.create_new_board(board=board, owner=current_user)
@@ -64,7 +64,7 @@ async def get_all(offset: int = 0, limit: int = 25):
 
 
 @router.get("/me", name="board:get-my-boards")
-async def get_my_boards(request: Request, current_user: User = Depends(get_current_active_user), offset: int = 0, limit: int = 25):
+async def get_my_boards(request: Request, current_user: models.User = Depends(get_current_active_user), offset: int = 0, limit: int = 25):
 
     boards = await board_repo.get_my_boards(user=current_user, offset=offset, limit=limit)
 
@@ -82,7 +82,7 @@ async def get_my_boards(request: Request, current_user: User = Depends(get_curre
 
 
 @router.get("/{id}", name="board:get-board-by-id")
-async def get_board(id: int, current_user: User = Depends(get_current_active_or_unauthenticated_user)):
+async def get_board(id: int, current_user: models.User = Depends(get_current_active_or_unauthenticated_user)):
     # get board from db
     board = await board_repo.get_board(id)
 
@@ -117,10 +117,10 @@ async def get_board(id: int, current_user: User = Depends(get_current_active_or_
     return board
 
 
-@router.get("/{id}/users", name="board:get-board-users")
-async def get_board_collaborators(id: int, request: Request, current_user: User = Depends(get_current_active_or_unauthenticated_user)): # current_user: User = Depends(get_user_from_token)
+@router.get("/{board_id}/users", name="board:get-board-users")
+async def get_board_collaborators(board_id: int, current_user: models.User = Depends(get_current_active_or_unauthenticated_user)):
     # get board from db
-    board = await board_repo.get_board(id)
+    board = await board_repo.get_board(board_id)
 
     # if board not found
     if not board:
@@ -143,10 +143,8 @@ async def get_board_collaborators(id: int, request: Request, current_user: User 
             detail="Board not found."
         )
 
-    query = User.outerjoin(BoardUsers).outerjoin(Board).select()
-    db_users = await query.gino.load(
-        User.distinct(User.id).load(add_user=Board.distinct(Board.id))).all()
+    db_users = await board_repo.get_board_collaborators(board_id=board_id)
 
-    users = [user_schema.UserPublic(**user.to_dict()) for user in db_users]
+    users = parse_obj_as(List[user_schema.UserPublic], list(map(models.User.to_dict, db_users)))
 
     return users
