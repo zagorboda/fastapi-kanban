@@ -15,10 +15,9 @@ class CardCreate(CardBase):
 
 class Card(CardBase):
     id: int
-    owner_id: int
     list_id: int
     created_at: datetime
-    last_changed_at: datetime
+    last_change_at: datetime
     last_change_by_id: int
 
     class Config:
