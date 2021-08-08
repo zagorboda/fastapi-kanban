@@ -12,6 +12,7 @@ from pydantic import parse_obj_as
 
 from app.db import models
 from app.db.repositories.boards import board_repo
+from app.db.repositories.users import user_repo
 from app.dependencies.auth import get_current_active_user, get_user_from_token, get_current_active_or_unauthenticated_user
 from app.schemes import board as board_schema
 from app.schemes import user as user_schema
@@ -145,6 +146,15 @@ async def get_board_collaborators(board_id: int, current_user: models.User = Dep
 
     db_users = await board_repo.get_board_collaborators(board_id=board_id)
 
-    users = parse_obj_as(List[user_schema.UserPublic], list(map(models.User.to_dict, db_users)))
+    # users = parse_obj_as(List[user_schema.UserPublicList], list(map(models.User.to_dict, db_users)))
+    users = []
+
+    for user in db_users:
+        users.append(
+            user_schema.UserPublicList(
+                **user.to_dict(),
+                **{'profile_url': await user_repo.get_user_profile_url(user.username)}
+            )
+        )
 
     return users

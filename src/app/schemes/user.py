@@ -53,3 +53,12 @@ class UserPublic(BaseModel):
     Models to return public user information
     """
     username: str
+    profile_url: str
+
+
+class UserPublicList(BaseModel):
+    """
+    Models to return list of users
+    """
+    username: str
+    profile_url: str

@@ -3,6 +3,7 @@ from typing import Optional
 from fastapi import HTTPException, status, Body
 from pydantic import EmailStr
 
+from app.core import config
 from app.db import models
 from app.schemes import user as user_schema
 from app.services import auth_service
@@ -14,6 +15,9 @@ class UsersRepository:
 
     async def get_all_users(self):
         return await models.User.query.gino.all()
+
+    async def get_user_profile_url(self, username: str):
+        return f'{config.BASE_URL}{config.API_PREFIX}/users/user/{username}'
 
     async def get_user_by_username(self, username: str):
         return await models.User.query.where(models.User.username == username).gino.first()

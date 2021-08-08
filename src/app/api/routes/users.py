@@ -24,7 +24,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 @router.get("/me/", name="user:get-current-user")
 async def get_currently_authenticated_user(current_user: User = Depends(get_current_active_user)) -> User:
-    return user_schema.UserPublic(**current_user.to_dict())
+    return user_schema.User(**current_user.to_dict())
 
 
 @router.post("/login/token/", response_model=AccessToken, name="user:login-email-and-password")
@@ -48,13 +48,17 @@ async def user_login_with_email_and_password(
     return access_token
 
 
-@router.get("/user/{username}", response_model=user_schema.UserPublic, name="user:get-user-by-username")
+@router.get("/user/{username}", name="user:get-user-by-username")
 async def get_user_by_username(username: str = Path(..., min_length=3, regex="^[a-zA-Z0-9_-]+$")) -> user_schema.User:
     user = await user_repo.get_user_by_username(username)
 
     if user is None:
         raise HTTPException(status_code=404)
-    return user_schema.User(**user.to_dict())
+
+    return user_schema.UserPublic(
+        **user.to_dict(),
+        profile_url=await user_repo.get_user_profile_url(username=user.username)
+    )
 
 
 @router.post("/", response_model=user_schema.User, name="users:register-new-user", status_code=HTTP_201_CREATED)
