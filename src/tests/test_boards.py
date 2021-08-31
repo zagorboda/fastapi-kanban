@@ -21,8 +21,6 @@ class TestCreate:
                 user_schema.UserCreate(**user_payload)
             )
 
-            owner = await UsersRepository().get_user_by_username('username')
-
             # get token
             token_response = await client.post(
                 "/api/users/login/token",
@@ -40,13 +38,13 @@ class TestCreate:
                 headers={'Authorization': f'Bearer {access_token}'}
             )
 
+
             owner = await UsersRepository().get_user_by_username('username')
 
             await client.aclose()
 
         assert response.status_code == 201
         assert response.json()['title'] == board_data['board']['title']
-        assert response.json()['owner_id'] == owner.id
         assert response.json()['public'] is True
 
     async def test_default_value(self, client):
