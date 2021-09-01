@@ -1,14 +1,13 @@
-from typing import List
+# from typing import List
 
-from fastapi import APIRouter, Path, Body, Depends, HTTPException, Request
-from fastapi.exceptions import HTTPException
+from fastapi import APIRouter, Body, Depends, Request
 # from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from starlette.status import (
     HTTP_201_CREATED,
     HTTP_404_NOT_FOUND,
 )
 
-from pydantic import parse_obj_as
+# from pydantic import parse_obj_as
 
 from app.db import models
 from app.db.repositories.boards import board_repo
@@ -65,7 +64,12 @@ async def get_all(offset: int = 0, limit: int = 25):
 
 
 @router.get("/me", name="board:get-my-boards")
-async def get_my_boards(request: Request, current_user: models.User = Depends(get_current_active_user), offset: int = 0, limit: int = 25):
+async def get_my_boards(
+        *,
+        current_user: models.User = Depends(get_current_active_user),
+        offset: int = 0,
+        limit: int = 25
+):
 
     boards = await board_repo.get_my_boards(user=current_user, offset=offset, limit=limit)
 
@@ -82,31 +86,15 @@ async def get_my_boards(request: Request, current_user: models.User = Depends(ge
     return response
 
 
-@router.get("/{id}", name="board:get-board-by-id")
-async def get_board(id: int, current_user: models.User = Depends(get_current_active_or_unauthenticated_user)):
-    # get board from db
-    board = await board_repo.get_board(id)
-
-    # if board not found
-    if not board:
-        raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND,
-            detail="Board not found."
-        )
-
-    user_is_collaborator = False
-
-    if current_user:
-        user_is_collaborator = await board_repo.check_user_is_board_collaborator(
-            user_id=current_user.id, board_id=board.id
-        )
-
-    # if board not public and request user not in users list
-    if not board.public and not (current_user and user_is_collaborator):
-        raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND,
-            detail="Board not found."
-        )
+@router.get("/{board_id}", name="board:get-board-by-id")
+async def get_board(
+        *,
+        board_id: int,
+        current_user:
+        models.User = Depends(get_current_active_or_unauthenticated_user),
+        request: Request,
+):
+    board = await board_repo.get_board_and_check_permissions(board_id=board_id, current_user=current_user, request=request)
 
     # convert model object to pydantic model, add self url and users url
     board = board_schema.Board(
@@ -119,33 +107,14 @@ async def get_board(id: int, current_user: models.User = Depends(get_current_act
 
 
 @router.get("/{board_id}/users", name="board:get-board-users")
-async def get_board_collaborators(board_id: int, current_user: models.User = Depends(get_current_active_or_unauthenticated_user)):
-    # get board from db
-    board = await board_repo.get_board(board_id)
-
-    # if board not found
-    if not board:
-        raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND,
-            detail="Board not found."
-        )
-
-    user_is_collaborator = False
-
-    if current_user:
-        user_is_collaborator = await board_repo.check_user_is_board_collaborator(
-            user_id=current_user.id, board_id=board.id
-        )
-
-    # if board not public and request user not in users list
-    if not board.public and not (current_user and user_is_collaborator):
-        raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND,
-            detail="Board not found."
-        )
+async def get_board_collaborators(
+        *,
+        board_id: int,
+        current_user: models.User = Depends(get_current_active_or_unauthenticated_user),
+        request: Request):
+    board = await board_repo.get_board_and_check_permissions(board_id=board_id, current_user=current_user, request=request)
 
     db_users = await board_repo.get_board_collaborators(board_id=board_id)
-
     # users = parse_obj_as(List[user_schema.UserPublicList], list(map(models.User.to_dict, db_users)))
     users = []
 

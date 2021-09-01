@@ -1,7 +1,7 @@
 from typing import Optional, Union
 
 
-from fastapi import Depends, HTTPException, Request
+from fastapi import Depends, Request
 from fastapi.exceptions import HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.security.utils import get_authorization_scheme_param

@@ -1,6 +1,12 @@
+from fastapi import Depends, Request, HTTPException
+from starlette.status import (
+    HTTP_404_NOT_FOUND,
+)
+
 from app.core import config
 from app.db import models
 from app.db.database import db
+from app.dependencies.auth import get_current_active_user, get_current_active_or_unauthenticated_user
 from app.schemes import board as board_schema
 from app.services import auth_service
 
@@ -68,6 +74,42 @@ class BoardsRepository:
                 await cursor.forward(offset)
             boards = await cursor.many(limit)
         return boards
+
+    async def get_board_and_check_permissions(
+            self,
+            *,
+            board_id: int,
+            current_user: models.User,
+            request: Request,
+    ):
+        board = await self.get_board(board_id)
+
+        # if board not found
+        if not board:
+            raise HTTPException(
+                status_code=HTTP_404_NOT_FOUND,
+                detail="Board not found."
+            )
+
+        # Check if board is public and request's method is safe
+        if board.public and request.method == 'GET':
+            return board
+
+        # Check if user in board collaborator
+        user_is_collaborator = False
+        if current_user:
+            user_is_collaborator = await self.check_user_is_board_collaborator(
+                user_id=current_user.id, board_id=board.id
+            )
+
+        if not user_is_collaborator:
+            raise HTTPException(
+                status_code=HTTP_404_NOT_FOUND,
+                detail="Board not found."
+            )
+
+        # If all check pass, return board
+        return board
 
 
 board_repo = BoardsRepository()

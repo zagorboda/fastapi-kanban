@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Path, Body, Depends, HTTPException, Request
+from fastapi import APIRouter, Body, Depends, Request
 from fastapi.exceptions import HTTPException
 from starlette.status import (
     HTTP_201_CREATED,
@@ -19,31 +19,13 @@ router = APIRouter(prefix="/boards", tags=["lists"])
 
 @router.post("/{board_id}/lists", name="list:create-list")
 async def create_list(
+        *,
         board_id: int,
         current_user: User = Depends(get_current_active_user),
-        title: str = Body(..., embed=True)
+        title: str = Body(..., embed=True),
+        request: Request
 ):
-    board = await board_repo.get_board(board_id)
-
-    # if board not found
-    if not board:
-        raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND,
-            detail="Board not found."
-        )
-
-    user_is_collaborator = False
-
-    if current_user:
-        user_is_collaborator = await board_repo.check_user_is_board_collaborator(
-            user_id=current_user.id, board_id=board.id
-        )
-
-    if not board.public and not user_is_collaborator:
-        raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND,
-            detail="Board not found."
-        )
+    board = await board_repo.get_board_and_check_permissions(board_id=board_id, current_user=current_user, request=request)
 
     new_list = await list_repo.create_new_list(
         created_by=current_user,
@@ -61,32 +43,14 @@ async def create_list(
 
 @router.get("/{board_id}/lists", name="list:get-lists")
 async def get_lists(
+        *,
         board_id: int,
         current_user: User = Depends(get_current_active_or_unauthenticated_user),
         offset: int = 0,
-        limit: int = 25
+        limit: int = 25,
+        request: Request
 ):
-    board = await board_repo.get_board(board_id)
-
-    # if board not found
-    if not board:
-        raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND,
-            detail="Board not found."
-        )
-
-    user_is_collaborator = False
-
-    if current_user:
-        user_is_collaborator = await board_repo.check_user_is_board_collaborator(
-            user_id=current_user.id, board_id=board.id
-        )
-
-    if not board.public and not user_is_collaborator:
-        raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND,
-            detail="Board not found."
-        )
+    board = await board_repo.get_board_and_check_permissions(board_id=board_id, current_user=current_user, request=request)
 
     lists = await list_repo.get_multiple_lists(board_id=board_id, offset=offset, limit=limit)
 
@@ -109,31 +73,13 @@ async def get_lists(
 
 @router.get("/{board_id}/lists/{list_id}", name="list:get-list-by-id")
 async def get_list(
+        *,
         board_id: int,
         list_id: int,
-        current_user: User = Depends(get_current_active_or_unauthenticated_user)
+        current_user: User = Depends(get_current_active_or_unauthenticated_user),
+        request: Request
 ):
-    board = await board_repo.get_board(board_id)
-
-    # if board not found
-    if not board:
-        raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND,
-            detail="Board not found."
-        )
-
-    user_is_collaborator = False
-
-    if current_user:
-        user_is_collaborator = await board_repo.check_user_is_board_collaborator(
-            user_id=current_user.id, board_id=board.id
-        )
-
-    if not board.public and not (current_user and user_is_collaborator):
-        raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND,
-            detail="Board not found."
-        )
+    board = await board_repo.get_board_and_check_permissions(board_id=board_id, current_user=current_user, request=request)
 
     requested_list = await list_repo.get_list_by_id(list_id=list_id)
 
