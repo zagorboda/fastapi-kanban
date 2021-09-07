@@ -1,3 +1,9 @@
+from fastapi import HTTPException
+from starlette.status import (
+    HTTP_404_NOT_FOUND,
+    HTTP_400_BAD_REQUEST,
+)
+
 from app.core import config
 from app.db import models
 from app.db.database import db
@@ -12,8 +18,29 @@ class CardsRepository:
     async def get_card_url(self, board_id: int, list_id: int, card_id: int):
         return f'{config.BASE_URL}{config.API_PREFIX}/boards/{board_id}/lists/{list_id}/card/{card_id}'
 
-    async def get_card(self, card_id: int):
+    async def get_card_by_id(self, card_id: int):
         return await models.Card.get(card_id)
+
+    async def get_card_by_id_and_check_list_foreign_key(self, card_id: int, lst: models.List):
+        card = await models.Card.get(card_id)
+
+        if not card:
+            raise HTTPException(
+                status_code=HTTP_404_NOT_FOUND,
+                detail=f"Card ({card_id}) not found"
+            )
+
+        if card.list_id != lst.id:
+            raise HTTPException(
+                status_code=HTTP_404_NOT_FOUND,
+                detail=f"Card ({card_id}) not found"
+            )
+            # raise HTTPException(
+            #     status_code=HTTP_400_BAD_REQUEST,
+            #     detail=f"Card ({card.id}) does not connected to List ({lst.id})"
+            # )
+
+        return card
 
     async def create_new_card(self, *, card: card_schema.CardCreate, list_id: int, user_id: int):
         return await models.Card.create(**card.dict(), **{'list_id': list_id, 'last_change_by_id': user_id})

@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Body, Depends, Request
-# from starlette.status import (
-#     HTTP_201_CREATED,
-#     HTTP_404_NOT_FOUND,
-# )
+from fastapi import APIRouter, Body, Depends, Request, HTTPException
+from starlette.status import (
+    HTTP_201_CREATED,
+    HTTP_404_NOT_FOUND,
+    HTTP_400_BAD_REQUEST,
+)
 
 from app.db import models
 from app.db.repositories import board_repo, list_repo, card_repo
@@ -14,7 +15,7 @@ router = APIRouter(prefix="/boards/{board_id}/lists/{list_id}/cards", tags=["car
 
 
 @router.post("/", name="card:create-card")
-async def create_list(
+async def create_card(
         *,
         board_id: int,
         list_id: int,
@@ -22,11 +23,14 @@ async def create_list(
         card: card_schema.CardCreate = Body(..., embed=True),
         request: Request
 ):
-    board = await board_repo.get_board_and_check_permissions(board_id=board_id, current_user=current_user, request=request)
+    board = await board_repo.get_board_and_check_permissions(board_id=board_id, current_user=current_user,
+                                                             request=request)
+
+    lst = await list_repo.get_list_by_id_and_check_board_foreign_key(list_id=list_id, board=board)
 
     new_card = await card_repo.create_new_card(
         card=card,
-        list_id=list_id,
+        list_id=lst.id,
         user_id=current_user.id
     )
 
@@ -45,7 +49,9 @@ async def get_cards(
 ):
     board = await board_repo.get_board_and_check_permissions(board_id=board_id, current_user=current_user, request=request)
 
-    cards = await card_repo.get_list_cards(list_id=list_id, offset=offset, limit=limit)
+    lst = await list_repo.get_list_by_id_and_check_board_foreign_key(list_id=list_id, board=board)
+
+    cards = await card_repo.get_list_cards(list_id=lst.id, offset=offset, limit=limit)
 
     response = []
 
@@ -64,8 +70,11 @@ async def get_card(
         current_user: models.User = Depends(get_current_active_or_unauthenticated_user),
         request: Request
 ):
-    board = await board_repo.get_board_and_check_permissions(board_id=board_id, current_user=current_user, request=request)
+    board = await board_repo.get_board_and_check_permissions(board_id=board_id, current_user=current_user,
+                                                             request=request)
 
-    card = await card_repo.get_card(card_id=card_id)
+    lst = await list_repo.get_list_by_id_and_check_board_foreign_key(list_id=list_id, board=board)
+
+    card = await card_repo.get_card_by_id_and_check_list_foreign_key(card_id=card_id, lst=lst)
 
     return card_schema.Card(**card.to_dict())
