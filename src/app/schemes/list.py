@@ -40,3 +40,10 @@ class ListCreate(ListBase):
     Model to create new list
     """
     pass
+
+
+class ListUpdate(BaseModel):
+    """
+    Update list object
+    """
+    title: constr(min_length=1, max_length=100)

@@ -81,12 +81,36 @@ async def get_list(
 ):
     board = await board_repo.get_board_and_check_permissions(board_id=board_id, current_user=current_user, request=request)
 
-    requested_list = await list_repo.get_list_by_id(list_id=list_id)
+    requested_list = await list_repo.get_list_by_id_and_check_board_foreign_key(list_id=list_id, board=board)
 
     return list_schema.ListModel(
         **requested_list.to_dict(),
         **{
             'url': await list_repo.get_list_url(board_id=board_id, list_id=requested_list.id),
             'cards_url': await list_repo.get_cards_url(board_id=board_id, list_id=requested_list.id),
+        }
+    )
+
+
+@router.patch("/{board_id}/lists/{list_id}", name="list:update-list")
+async def update_list(
+        *,
+        board_id: int,
+        list_id: int,
+        current_user: User = Depends(get_current_active_user),
+        updated_list: list_schema.ListUpdate = Body(..., embed=True),
+        request: Request
+):
+    board = await board_repo.get_board_and_check_permissions(board_id=board_id, current_user=current_user, request=request)
+
+    lst = await list_repo.get_list_by_id_and_check_board_foreign_key(list_id=list_id, board=board)
+
+    await list_repo.update(lst=lst, updated_list=updated_list)
+
+    return list_schema.ListModel(
+        **lst.to_dict(),
+        **{
+            'url': await list_repo.get_list_url(board_id=board_id, list_id=lst.id),
+            'cards_url': await list_repo.get_cards_url(board_id=board_id, list_id=lst.id),
         }
     )
