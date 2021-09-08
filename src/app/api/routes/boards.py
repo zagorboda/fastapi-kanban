@@ -56,7 +56,10 @@ async def get_all(offset: int = 0, limit: int = 25):
         response.append(
             board_schema.Board(
                 **board.to_dict(),
-                **{'url': await board_repo.get_board_url(board.id)}
+                **{
+                    'url': await board_repo.get_board_url(board.id),
+                    'collaborators_url': await board_repo.get_board_collaborators_url(board.id)
+                },
             )
         )
 
@@ -79,7 +82,10 @@ async def get_my_boards(
         response.append(
             board_schema.Board(
                 **board.to_dict(),
-                **{'url': await board_repo.get_board_url(board.id)}
+                **{
+                    'url': await board_repo.get_board_url(board.id),
+                    'collaborators_url': await board_repo.get_board_collaborators_url(board.id)
+                },
             )
         )
 
@@ -99,8 +105,10 @@ async def get_board(
     # convert model object to pydantic model, add self url and users url
     board = board_schema.Board(
         **board.to_dict(),
-        **{'url': await board_repo.get_board_url(board.id)},
-        **{'collaborators_url': await board_repo.get_board_collaborators_url(board.id)}
+        **{
+            'url': await board_repo.get_board_url(board.id),
+            'collaborators_url': await board_repo.get_board_collaborators_url(board.id)
+        },
     )
 
     return board
