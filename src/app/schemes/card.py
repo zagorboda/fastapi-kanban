@@ -22,3 +22,10 @@ class Card(CardBase):
 
     class Config:
         orm_mode = True
+
+
+class CardUpdate(CardBase):
+    title: str
+    description: Optional[str] = None
+
+    list_id: int

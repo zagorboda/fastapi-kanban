@@ -56,5 +56,21 @@ class CardsRepository:
             cards = await cursor.many(limit)
         return cards
 
+    async def update(self, *, card: models.Card, updated_card: card_schema.CardUpdate):
+        if 'list_id' in updated_card.dict():
+            # Import list_repo and board_repo or use queries?
+            old_list = await models.List.get(card.list_id)
+            board = await models.Board.get(old_list.board_id)
+
+            new_list = await models.List.get(updated_card.dict().get('list_id'))
+
+            if not new_list or new_list.board_id != board.id:
+                raise HTTPException(
+                    status_code=HTTP_400_BAD_REQUEST,
+                    detail=f"List ({updated_card.dict().get('list_id')}) not exists"
+                )
+
+        await card.update(**updated_card.dict()).apply()
+
 
 card_repo = CardsRepository()

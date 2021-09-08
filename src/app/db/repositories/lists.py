@@ -57,7 +57,6 @@ class ListsRepository:
         return lists
 
     async def update(self, *, lst: models.List, updated_list: list_schema.ListUpdate):
-        print(updated_list.dict())
         await lst.update(**updated_list.dict()).apply()
 
 

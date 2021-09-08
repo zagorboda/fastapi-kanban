@@ -90,7 +90,6 @@ class BoardsRepository:
                 status_code=HTTP_404_NOT_FOUND,
                 detail="Board not found."
             )
-
         # Check if board is public and request's method is safe
         if board.public and request.method == 'GET':
             return board
@@ -101,7 +100,6 @@ class BoardsRepository:
             user_is_collaborator = await self.check_user_is_board_collaborator(
                 user_id=current_user.id, board_id=board.id
             )
-
         if not user_is_collaborator:
             raise HTTPException(
                 status_code=HTTP_404_NOT_FOUND,
