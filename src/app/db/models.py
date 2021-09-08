@@ -69,12 +69,11 @@ class List(db.Model):
     created_by = relationship("User", backref="lists")
 
 
-# TODO: add indexes
 class BoardUsers(db.Model):
     __tablename__ = 'board_users'
 
-    board_id = Column(Integer, ForeignKey('boards.id'), nullable=False)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    board_id = Column(Integer, ForeignKey('boards.id'), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
 
 
 class Board(db.Model):
@@ -104,4 +103,34 @@ class Board(db.Model):
     # users = relationship("User", secondary=board_users)
 
 
+class CardHistory(db.Model):
+    __tablename__ = "cards_history"
 
+    id = Column(Integer, primary_key=True)
+    card_id = Column(Integer, index=True)
+    title = Column(Text, nullable=False)
+    description = Column(Text)
+
+    list_id = Column(Integer, ForeignKey("lists.id"), index=True)
+    list = relationship("List", backref="cards")
+
+    last_change_by_id = Column(Integer, ForeignKey("users.id"))
+    last_change_by = relationship("User", backref="cards", foreign_keys=[last_change_by_id])
+
+    last_change_at = Column(DateTime, nullable=False, default=datetime.datetime.now())
+
+
+class ListHistory(db.Model):
+    __tablename__ = "lists_history"
+
+    id = Column(Integer, primary_key=True)
+    list_id = Column(Integer, index=True)
+    title = Column(String, nullable=False)
+
+    board_id = Column(Integer, ForeignKey("boards.id"), nullable=False)
+    board = relationship("Board", backref="lists")
+
+    last_change_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    last_change_by = relationship("User", backref="cards", foreign_keys=[last_change_by_id])
+
+    last_change_at = Column(DateTime, nullable=False, default=datetime.datetime.now())
