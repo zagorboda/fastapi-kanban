@@ -24,7 +24,7 @@ class User(db.Model):
     is_active = Column(Boolean, default=True, nullable=False)
     is_superuser = Column(Boolean, default=False, nullable=False)
 
-    created_at = Column(DateTime, nullable=False, default=datetime.datetime.now())
+    created_at = Column(DateTime, nullable=False, default=datetime.datetime.now)
 
     def __init__(self, **kw):
         super().__init__(**kw)
@@ -45,8 +45,8 @@ class Card(db.Model):
     title = Column(Text, nullable=False)
     description = Column(Text)
 
-    created_at = Column(DateTime, nullable=False, default=datetime.datetime.now())
-    last_change_at = Column(DateTime, nullable=False, default=datetime.datetime.now())
+    created_at = Column(DateTime, nullable=False, default=datetime.datetime.now)
+    last_change_at = Column(DateTime, nullable=False, default=datetime.datetime.now)
 
     list_id = Column(Integer, ForeignKey("lists.id"))
     list = relationship("List", backref="cards")
@@ -86,7 +86,7 @@ class Board(db.Model):
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     owner = relationship("User", backref="boards")
 
-    created_at = Column(DateTime, nullable=False, default=datetime.datetime.now())
+    created_at = Column(DateTime, nullable=False, default=datetime.datetime.now)
 
     def __init__(self, **kw):
         super().__init__(**kw)
@@ -117,7 +117,7 @@ class CardHistory(db.Model):
     last_change_by_id = Column(Integer, ForeignKey("users.id"))
     last_change_by = relationship("User", backref="cards", foreign_keys=[last_change_by_id])
 
-    last_change_at = Column(DateTime, nullable=False, default=datetime.datetime.now())
+    last_change_at = Column(DateTime, nullable=False, default=datetime.datetime.now)
 
 
 class ListHistory(db.Model):
@@ -133,4 +133,4 @@ class ListHistory(db.Model):
     last_change_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     last_change_by = relationship("User", backref="cards", foreign_keys=[last_change_by_id])
 
-    last_change_at = Column(DateTime, nullable=False, default=datetime.datetime.now())
+    last_change_at = Column(DateTime, nullable=False, default=datetime.datetime.now)

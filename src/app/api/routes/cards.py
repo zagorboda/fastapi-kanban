@@ -34,6 +34,8 @@ async def create_card(
         user_id=current_user.id
     )
 
+    await card_repo.write_history(card=new_card)
+
     return card_schema.Card(**new_card.to_dict())
 
 
@@ -99,4 +101,33 @@ async def update_card(
 
     await card_repo.update(card=card, updated_card=updated_card)
 
+    await card_repo.write_history(card=card)
+
     return card_schema.Card(**card.to_dict())
+
+
+@router.get("/{card_id}/history", name="card:get-card-history")
+async def get_card_history(
+        *,
+        board_id: int,
+        list_id: int,
+        card_id: int,
+        current_user: models.User = Depends(get_current_active_or_unauthenticated_user),
+        request: Request
+):
+    board = await board_repo.get_board_and_check_permissions(board_id=board_id, current_user=current_user,
+                                                             request=request)
+
+    lst = await list_repo.get_list_by_id_and_check_board_foreign_key(list_id=list_id, board=board)
+
+    card = await card_repo.get_card_by_id_and_check_list_foreign_key(card_id=card_id, lst=lst)
+
+    card_history = await card_repo.get_history(card_id=card.id)
+
+    response = []
+
+    for record in card_history:
+        response.append(card_schema.CardHistoryRetrieve(**record.to_dict()))
+
+    return response
+

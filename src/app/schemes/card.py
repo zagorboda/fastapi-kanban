@@ -25,7 +25,21 @@ class Card(CardBase):
 
 
 class CardUpdate(CardBase):
+    title: Optional[str]
+    description: Optional[str] = None
+
+    list_id: Optional[int]
+
+
+class CardHistory(BaseModel):
+    card_id: int
     title: str
     description: Optional[str] = None
 
     list_id: int
+    last_change_by_id: int
+    last_change_at: datetime
+
+
+class CardHistoryRetrieve(CardHistory):
+    id: int

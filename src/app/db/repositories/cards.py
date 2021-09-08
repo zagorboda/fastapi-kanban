@@ -1,3 +1,5 @@
+import datetime
+
 from fastapi import HTTPException
 from starlette.status import (
     HTTP_404_NOT_FOUND,
@@ -43,7 +45,17 @@ class CardsRepository:
         return card
 
     async def create_new_card(self, *, card: card_schema.CardCreate, list_id: int, user_id: int):
-        return await models.Card.create(**card.dict(), **{'list_id': list_id, 'last_change_by_id': user_id})
+        now = datetime.datetime.now()
+
+        return await models.Card.create(
+            **card.dict(),
+            **{
+                'list_id': list_id,
+                'last_change_by_id': user_id,
+                'last_change_at': now,
+                'created_at': now
+            }
+        )
 
     async def get_list_cards(self, *, list_id: int, offset=0, limit=25):
         if not limit:
@@ -57,20 +69,51 @@ class CardsRepository:
         return cards
 
     async def update(self, *, card: models.Card, updated_card: card_schema.CardUpdate):
-        if 'list_id' in updated_card.dict():
+        updated_card = updated_card.dict()
+
+        if 'list_id' in updated_card and updated_card.get('list_id'):
             # Import list_repo and board_repo or use queries?
             old_list = await models.List.get(card.list_id)
             board = await models.Board.get(old_list.board_id)
 
-            new_list = await models.List.get(updated_card.dict().get('list_id'))
+            new_list = await models.List.get(updated_card.get('list_id'))
 
             if not new_list or new_list.board_id != board.id:
                 raise HTTPException(
                     status_code=HTTP_400_BAD_REQUEST,
-                    detail=f"List ({updated_card.dict().get('list_id')}) not exists"
+                    detail=f"List ({updated_card.get('list_id')}) not exists"
                 )
+        else:
+            del updated_card['list_id']
 
-        await card.update(**updated_card.dict()).apply()
+        await card.update(
+            **updated_card |
+            {'last_change_at': datetime.datetime.now()}
+        ).apply()
+
+    async def write_history(self, *, card: models.Card):
+        # Merge card with new fields, rewrite last_change_at field (used python3.9 syntax **{d1 | d1})
+        history_data = card_schema.CardHistory(
+            **card.to_dict() |
+            {
+                'card_id': card.to_dict().get('id'),
+                'last_change_at': datetime.datetime.now()
+            }
+        )
+
+        await models.CardHistory.create(**history_data.dict())
+
+    async def get_history(self, *, card_id: int, offset=0, limit=25):
+        if not limit:
+            limit = 25
+
+        async with db.transaction():
+            cursor = await models.CardHistory.query.where(models.CardHistory.card_id == card_id).order_by(models.CardHistory.last_change_at.desc()).gino.iterate()
+            if offset:
+                await cursor.forward(offset)
+            history_records = await cursor.many(limit)
+
+        return history_records
 
 
 card_repo = CardsRepository()
