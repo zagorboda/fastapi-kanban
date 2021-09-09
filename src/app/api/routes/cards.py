@@ -5,7 +5,7 @@ from starlette.status import (
     HTTP_400_BAD_REQUEST,
 )
 
-from app.db import models
+from app.db import models, enums
 from app.db.repositories import board_repo, list_repo, card_repo
 from app.dependencies.auth import get_current_active_user, get_current_active_or_unauthenticated_user
 from app.schemes import card as card_schema
@@ -28,13 +28,11 @@ async def create_card(
 
     lst = await list_repo.get_list_by_id_and_check_board_foreign_key(list_id=list_id, board=board)
 
-    new_card = await card_repo.create_new_card(
+    new_card = await card_repo.create_new_card_and_write_history(
         card=card,
         list_id=lst.id,
         user_id=current_user.id
     )
-
-    await card_repo.write_history(card=new_card)
 
     return card_schema.Card(**new_card.to_dict())
 
@@ -99,9 +97,7 @@ async def update_card(
 
     card = await card_repo.get_card_by_id_and_check_list_foreign_key(card_id=card_id, lst=lst)
 
-    await card_repo.update(card=card, updated_card=updated_card)
-
-    await card_repo.write_history(card=card)
+    await card_repo.update_and_write_history(card=card, updated_card=updated_card, action=enums.CardHistoryActions.update)
 
     return card_schema.Card(**card.to_dict())
 

@@ -4,6 +4,9 @@ from typing import Optional
 from pydantic import BaseModel
 
 
+from app.db import enums
+
+
 class CardBase(BaseModel):
     title: str
     description: Optional[str] = None
@@ -35,6 +38,7 @@ class CardHistory(BaseModel):
     card_id: int
     title: str
     description: Optional[str] = None
+    action: enums.CardHistoryActions
 
     list_id: int
     last_change_by_id: int

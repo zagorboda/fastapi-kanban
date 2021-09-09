@@ -10,7 +10,7 @@ services:
     environment:
       - POSTGRES_USER=admin
       - POSTGRES_PASSWORD=admin
-      - POSTGRES_NAME=fastapi_dev
+      - POSTGRES_DB=fastapi_dev
     command: -p 5432
 
 

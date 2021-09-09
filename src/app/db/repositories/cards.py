@@ -7,7 +7,7 @@ from starlette.status import (
 )
 
 from app.core import config
-from app.db import models
+from app.db import models, enums
 from app.db.database import db
 from app.schemes import card as card_schema
 from app.services import auth_service
@@ -57,6 +57,17 @@ class CardsRepository:
             }
         )
 
+    async def create_new_card_and_write_history(self, *, card: card_schema.CardCreate, list_id: int, user_id: int):
+        new_card = await self.create_new_card(
+            card=card,
+            list_id=list_id,
+            user_id=user_id
+        )
+
+        await self.write_history(card=new_card, action=enums.CardHistoryActions.create)
+
+        return new_card
+
     async def get_list_cards(self, *, list_id: int, offset=0, limit=25):
         if not limit:
             limit = 25
@@ -91,13 +102,22 @@ class CardsRepository:
             {'last_change_at': datetime.datetime.now()}
         ).apply()
 
-    async def write_history(self, *, card: models.Card):
+    async def update_and_write_history(self, *, card: models.Card, updated_card: card_schema.CardUpdate, action: enums.CardHistoryActions):
+        await self.update(card=card, updated_card=updated_card)
+
+        updated_card = updated_card.dict()
+        if 'list_id' in updated_card and updated_card.get('list_id'):
+            action = enums.CardHistoryActions.move
+
+        await self.write_history(card=card, action=action)
+
+    async def write_history(self, *, card: models.Card, action: enums.CardHistoryActions):
         # Merge card with new fields, rewrite last_change_at field (used python3.9 syntax **{d1 | d1})
         history_data = card_schema.CardHistory(
             **card.to_dict() |
             {
                 'card_id': card.to_dict().get('id'),
-                'last_change_at': datetime.datetime.now()
+                'action': action
             }
         )
 

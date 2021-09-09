@@ -1,10 +1,13 @@
 import datetime
 
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text, DateTime, Table, inspect
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text, DateTime, Enum, Table, inspect
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 from app.db.database import db
+
+from . import enums
+
 
 Base = declarative_base()
 
@@ -110,6 +113,8 @@ class CardHistory(db.Model):
     card_id = Column(Integer, index=True)
     title = Column(Text, nullable=False)
     description = Column(Text)
+
+    action = Column(Enum(enums.CardHistoryActions), nullable=False)
 
     list_id = Column(Integer, ForeignKey("lists.id"), index=True)
     list = relationship("List", backref="cards")
