@@ -1,7 +1,6 @@
 from fastapi import HTTPException
 from starlette.status import (
     HTTP_404_NOT_FOUND,
-    HTTP_400_BAD_REQUEST,
 )
 
 
@@ -58,6 +57,19 @@ class ListsRepository:
 
     async def update(self, *, lst: models.List, updated_list: list_schema.ListUpdate):
         await lst.update(**updated_list.dict()).apply()
+
+    async def get_cards_history(self, list_id: int, offset=0, limit=25):
+        if not limit:
+            limit = 25
+
+        async with db.transaction():
+            cursor = await models.CardHistory.query.where(models.CardHistory.list_id == list_id)\
+                .order_by(models.CardHistory.last_change_at.desc()).gino.iterate()
+            if offset:
+                await cursor.forward(offset)
+            records = await cursor.many(limit)
+
+        return records
 
 
 list_repo = ListsRepository()

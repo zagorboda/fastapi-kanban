@@ -125,17 +125,17 @@ class CardHistory(db.Model):
     last_change_at = Column(DateTime, nullable=False, default=datetime.datetime.now)
 
 
-class ListHistory(db.Model):
-    __tablename__ = "lists_history"
-
-    id = Column(Integer, primary_key=True)
-    list_id = Column(Integer, index=True)
-    title = Column(String, nullable=False)
-
-    board_id = Column(Integer, ForeignKey("boards.id"), nullable=False)
-    board = relationship("Board", backref="lists")
-
-    last_change_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    last_change_by = relationship("User", backref="cards", foreign_keys=[last_change_by_id])
-
-    last_change_at = Column(DateTime, nullable=False, default=datetime.datetime.now)
+# class ListHistory(db.Model):
+#     __tablename__ = "lists_history"
+#
+#     id = Column(Integer, primary_key=True)
+#     list_id = Column(Integer, index=True)
+#     title = Column(String, nullable=False)
+#
+#     board_id = Column(Integer, ForeignKey("boards.id"), nullable=False)
+#     board = relationship("Board", backref="lists")
+#
+#     last_change_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+#     last_change_by = relationship("User", backref="cards", foreign_keys=[last_change_by_id])
+#
+#     last_change_at = Column(DateTime, nullable=False, default=datetime.datetime.now)

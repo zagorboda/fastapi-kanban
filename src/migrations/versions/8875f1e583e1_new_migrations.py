@@ -1,8 +1,8 @@
-"""migrations
+"""New migrations
 
-Revision ID: 30d1d46ac185
+Revision ID: 8875f1e583e1
 Revises: 
-Create Date: 2021-09-09 06:47:53.008608
+Create Date: 2021-09-09 16:08:09.284578
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '30d1d46ac185'
+revision = '8875f1e583e1'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -61,18 +61,6 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_lists_id'), 'lists', ['id'], unique=False)
-    op.create_table('lists_history',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('list_id', sa.Integer(), nullable=True),
-    sa.Column('title', sa.String(), nullable=False),
-    sa.Column('board_id', sa.Integer(), nullable=False),
-    sa.Column('last_change_by_id', sa.Integer(), nullable=False),
-    sa.Column('last_change_at', sa.DateTime(), nullable=False),
-    sa.ForeignKeyConstraint(['board_id'], ['boards.id'], ),
-    sa.ForeignKeyConstraint(['last_change_by_id'], ['users.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_lists_history_list_id'), 'lists_history', ['list_id'], unique=False)
     op.create_table('cards',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('title', sa.Text(), nullable=False),
@@ -95,8 +83,8 @@ def upgrade():
     sa.Column('list_id', sa.Integer(), nullable=True),
     sa.Column('last_change_by_id', sa.Integer(), nullable=True),
     sa.Column('last_change_at', sa.DateTime(), nullable=False),
-    sa.ForeignKeyConstraint(['last_change_by_id'], ['users.id'], ),
-    sa.ForeignKeyConstraint(['list_id'], ['lists.id'], ),
+    sa.ForeignKeyConstraint(['last_change_by_id'], ['users.id'], ondelete='NO ACTION'),
+    sa.ForeignKeyConstraint(['list_id'], ['lists.id'], ondelete='NO ACTION'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_cards_history_card_id'), 'cards_history', ['card_id'], unique=False)
@@ -111,8 +99,6 @@ def downgrade():
     op.drop_table('cards_history')
     op.drop_index(op.f('ix_cards_id'), table_name='cards')
     op.drop_table('cards')
-    op.drop_index(op.f('ix_lists_history_list_id'), table_name='lists_history')
-    op.drop_table('lists_history')
     op.drop_index(op.f('ix_lists_id'), table_name='lists')
     op.drop_table('lists')
     op.drop_index(op.f('ix_board_users_user_id'), table_name='board_users')

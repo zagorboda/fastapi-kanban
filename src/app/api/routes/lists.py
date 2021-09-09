@@ -1,17 +1,16 @@
-from fastapi import APIRouter, Body, Depends, Request
-from fastapi.exceptions import HTTPException
-from starlette.status import (
-    HTTP_201_CREATED,
-    HTTP_404_NOT_FOUND,
-)
+from typing import List
 
+from fastapi import APIRouter, Body, Depends, Request
+
+from pydantic import parse_obj_as
+
+from app.db.database import db
 from app.db.models import User, Board, BoardUsers
 from app.db.repositories.boards import board_repo
 from app.db.repositories.lists import list_repo
 from app.dependencies.auth import get_current_active_user, get_user_from_token, get_current_active_or_unauthenticated_user
-# from app.schemes import board as board_schema
-# from app.schemes import user as user_schema
 from app.schemes import list as list_schema
+from app.schemes import card as card_schema
 
 
 router = APIRouter(prefix="/boards", tags=["lists"])
@@ -113,4 +112,26 @@ async def update_list(
             'url': await list_repo.get_list_url(board_id=board_id, list_id=lst.id),
             'cards_url': await list_repo.get_cards_url(board_id=board_id, list_id=lst.id),
         }
+    )
+
+
+@router.get("/{board_id}/lists/{list_id}/history", name="list:get-list-history")
+async def get_list(
+        *,
+        board_id: int,
+        list_id: int,
+        current_user: User = Depends(get_current_active_or_unauthenticated_user),
+        request: Request,
+        offset: int = 0,
+        limit: int = 25,
+):
+    board = await board_repo.get_board_and_check_permissions(board_id=board_id, current_user=current_user, request=request)
+
+    lst = await list_repo.get_list_by_id_and_check_board_foreign_key(list_id=list_id, board=board)
+
+    history_list = await list_repo.get_cards_history(list_id=lst.id, offset=offset, limit=limit)
+
+    return parse_obj_as(
+        List[card_schema.CardHistoryRetrieve],
+        list(map(db.Model.to_dict, history_list))
     )
