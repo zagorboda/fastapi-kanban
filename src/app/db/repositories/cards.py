@@ -102,14 +102,14 @@ class CardsRepository:
             {'last_change_at': datetime.datetime.now()}
         ).apply()
 
-    async def update_and_write_history(self, *, card: models.Card, updated_card: card_schema.CardUpdate, action: enums.CardHistoryActions):
+    async def update_and_write_history(self, *, card: models.Card, updated_card: card_schema.CardUpdate):
         await self.update(card=card, updated_card=updated_card)
 
         updated_card = updated_card.dict()
         if 'list_id' in updated_card and updated_card.get('list_id'):
             action = enums.CardHistoryActions.move
 
-        await self.write_history(card=card, action=action)
+        await self.write_history(card=card, action=enums.CardHistoryActions.update)
 
     async def write_history(self, *, card: models.Card, action: enums.CardHistoryActions):
         # Merge card with new fields, rewrite last_change_at field (used python3.9 syntax **{d1 | d1})
@@ -134,6 +134,23 @@ class CardsRepository:
             history_records = await cursor.many(limit)
 
         return history_records
+
+    async def delete_by_id(self, *, card_id):
+        return await models.Card.delete.returning().where(models.Card.id == card_id).gino.first()
+
+    async def delete_instance(self, *, card: models.Card):
+        await card.delete()
+
+        return card
+
+    async def delete_and_write_history(self, *, card: models.Card):
+        await card.delete()
+
+        await self.write_history(card=card, action=enums.CardHistoryActions.delete)
+
+        card.last_change_at = datetime.datetime.now()
+
+        return card
 
 
 card_repo = CardsRepository()

@@ -116,10 +116,10 @@ class CardHistory(db.Model):
 
     action = Column(Enum(enums.CardHistoryActions), nullable=False)
 
-    list_id = Column(Integer, ForeignKey("lists.id"), index=True)
+    list_id = Column(Integer, ForeignKey("lists.id", ondelete="NO ACTION"), index=True)
     list = relationship("List", backref="cards")
 
-    last_change_by_id = Column(Integer, ForeignKey("users.id"))
+    last_change_by_id = Column(Integer, ForeignKey("users.id", ondelete="NO ACTION"))
     last_change_by = relationship("User", backref="cards", foreign_keys=[last_change_by_id])
 
     last_change_at = Column(DateTime, nullable=False, default=datetime.datetime.now)

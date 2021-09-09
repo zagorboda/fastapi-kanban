@@ -97,7 +97,7 @@ async def update_card(
 
     card = await card_repo.get_card_by_id_and_check_list_foreign_key(card_id=card_id, lst=lst)
 
-    await card_repo.update_and_write_history(card=card, updated_card=updated_card, action=enums.CardHistoryActions.update)
+    await card_repo.update_and_write_history(card=card, updated_card=updated_card)
 
     return card_schema.Card(**card.to_dict())
 
@@ -127,3 +127,25 @@ async def get_card_history(
 
     return response
 
+
+@router.delete("/{card_id}", name="card:delete-card")
+async def delete_card(
+        *,
+        board_id: int,
+        list_id: int,
+        card_id: int,
+        current_user: models.User = Depends(get_current_active_user),
+        request: Request
+):
+    board = await board_repo.get_board_and_check_permissions(board_id=board_id, current_user=current_user,
+                                                             request=request)
+
+    lst = await list_repo.get_list_by_id_and_check_board_foreign_key(list_id=list_id, board=board)
+
+    card = await card_repo.get_card_by_id_and_check_list_foreign_key(card_id=card_id, lst=lst)
+
+    deleted_card = await card_repo.delete_and_write_history(card=card)
+
+    return card_schema.Card(
+        **deleted_card.to_dict()
+    )
