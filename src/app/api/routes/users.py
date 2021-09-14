@@ -17,6 +17,8 @@ from app.schemes import user as user_schema
 from app.services import auth_service
 from app.schemes.token import AccessToken
 
+from app.celery.worker import send_sign_up_email
+
 router = APIRouter(prefix="/users", tags=["users"])
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -64,6 +66,8 @@ async def get_user_by_username(username: str = Path(..., min_length=3, regex="^[
 @router.post("/", response_model=user_schema.User, name="users:register-new-user", status_code=HTTP_201_CREATED)
 async def register_new_user(new_user: user_schema.UserCreate = Body(..., embed=True)) -> user_schema.User:
     created_user = await user_repo.register_new_user(new_user)
+
+    send_sign_up_email.delay(email=new_user.email)
 
     access_token = AccessToken(
         access_token=auth_service.create_access_token_for_user(user=user_schema.User(**created_user.to_dict())), token_type="bearer"

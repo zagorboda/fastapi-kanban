@@ -12,3 +12,5 @@ RUN pip install --upgrade pip  setuptools wheel \
     && rm -rf /root/.cache/pip
 
 COPY . ./
+
+CMD ["./startup.sh"]
