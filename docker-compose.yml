@@ -1,6 +1,19 @@
 version: "3.3"
 
 services:
+  web:
+    build: ./src
+#    command: uvicorn app.server:app --reload --host 0.0.0.0 --port 8000
+    volumes:
+      - ./src/:/usr/src/app/
+      - media:/usr/src/media/
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql://admin:admin@db:5432/fastapi_dev
+
   db:
     image: postgres:13
     volumes:
@@ -13,21 +26,11 @@ services:
       - POSTGRES_DB=fastapi_dev
     command: -p 5432
 
-
-  web:
-    build: ./src
-    command: uvicorn app.server:app --reload --host 0.0.0.0 --port 8000
-    volumes:
-      - ./src/:/usr/src/app/
-    ports:
-      - "8000:8000"
-    depends_on:
-      - db
-    environment:
-      - DATABASE_URL=postgresql://admin:admin@db:5432/fastapi_dev
-
   celery:
+    # TODO: use separate (maybe empty Dockerfile) to avoid build duplication
     build: ./src
+    # ? celery use same build context as web container, so alembic upgrade head will be executed twice,
+    # and (maybe) key duplication error will be raised
     command: celery -A app.celery.worker worker --loglevel=info --logfile=app/logs/celery.log
     # -Ofair --pool=gevent --concurrency=10
     volumes:
@@ -47,3 +50,4 @@ services:
 
 volumes:
   postgres_data:
+  media:

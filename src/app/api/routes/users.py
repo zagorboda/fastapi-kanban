@@ -18,7 +18,7 @@ from app.schemes.token import AccessToken
 
 from app.celery.worker import send_sign_up_email, write_file_on_disk
 
-import aiofiles
+from app.utils.upload_image import upload_image
 
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -102,10 +102,7 @@ async def update_password(
 
 
 @router.post("/upload_file/")
-async def create_upload_file(file: UploadFile = File(...)):
-    async with aiofiles.open(f'app/media/{file.filename}', 'wb') as out_file:
-        while content := await file.read(1024):  # async read chunk
-            await out_file.write(content)  # async write chunk
-    # write_file_on_disk.delay(file=file)
+async def create_upload_file(file: UploadFile = File(...), current_user: User = Depends(get_current_active_user)):
+    await upload_image(file=file, user=current_user)
 
     return HTTP_200_OK
