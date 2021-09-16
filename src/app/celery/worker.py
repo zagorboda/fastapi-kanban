@@ -1,8 +1,8 @@
+import aiofiles
 import os
-import time
 
 from celery import Celery
-
+from fastapi import UploadFile
 
 celery = Celery(__name__)
 celery.conf.broker_url = os.environ.get("CELERY_BROKER_URL", "redis://redis:6379")
@@ -21,5 +21,14 @@ def send_sign_up_email(*, email: str):
     message = 'You just signed up. Please, confirm email...'
 
     mock_up_send_email(email, message)
+
+    return True
+
+
+@celery.task(name="write_file_on_disk", soft_time_limit=60)
+def write_file_on_disk(*, file: UploadFile):
+    # async with aiofiles.open(f'app/media/{file.filename}', 'wb') as out_file:
+    #     while content := await file.read(1024):  # async read chunk
+    #         await out_file.write(content)  # async write chunk
 
     return True

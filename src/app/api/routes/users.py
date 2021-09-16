@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Path, Body, Depends, HTTPException
+from fastapi import APIRouter, Path, Body, Depends, File, UploadFile
 from fastapi.exceptions import HTTPException
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from starlette.status import (
@@ -7,7 +7,6 @@ from starlette.status import (
     HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
     HTTP_404_NOT_FOUND,
-    HTTP_422_UNPROCESSABLE_ENTITY,
 )
 
 from app.db.repositories.users import user_repo
@@ -17,7 +16,10 @@ from app.schemes import user as user_schema
 from app.services import auth_service
 from app.schemes.token import AccessToken
 
-from app.celery.worker import send_sign_up_email
+from app.celery.worker import send_sign_up_email, write_file_on_disk
+
+import aiofiles
+
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -97,3 +99,13 @@ async def update_password(
 ):
     await user_repo.update_password(current_user=current_user, password_update=password_update)
     return {'message': 'Password updated'}
+
+
+@router.post("/upload_file/")
+async def create_upload_file(file: UploadFile = File(...)):
+    async with aiofiles.open(f'app/media/{file.filename}', 'wb') as out_file:
+        while content := await file.read(1024):  # async read chunk
+            await out_file.write(content)  # async write chunk
+    # write_file_on_disk.delay(file=file)
+
+    return HTTP_200_OK
