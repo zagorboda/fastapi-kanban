@@ -105,4 +105,4 @@ async def update_password(
 async def create_upload_file(file: UploadFile = File(...), current_user: User = Depends(get_current_active_user)):
     await upload_image(file=file, user=current_user)
 
-    return HTTP_200_OK
+    return {'message': 'Image uploaded'}

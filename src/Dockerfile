@@ -17,10 +17,3 @@ RUN chmod +x entrypoint.sh
 COPY . ./
 
 ENTRYPOINT ["sh","/usr/src/app/entrypoint.sh"]
-
-#RUN chmod 777 ./startup.sh
-#RUN chmod +x ./startup.sh
-#RUN ./startup.sh
-
-#ENTRYPOINT echo "Hello World"
-#ENTRYPOINT ["./startup.sh"]

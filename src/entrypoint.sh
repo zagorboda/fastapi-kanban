@@ -12,7 +12,12 @@ alembic upgrade head
 #  touch $FIRST_CONTAINER_START
 #fi
 
-mkdir /usr/src/media
-mkdir /usr/src/media/profile_pic
+#if [ ! -d /usr/src/media ]; then
+#  mkdir /usr/src/media
+#fi
+#
+#if [ ! -d /usr/src/media/profile_pic ]; then
+#  mkdir /usr/src/media/profile_pic
+#fi
 
 uvicorn app.server:app --reload --host 0.0.0.0 --port 8000

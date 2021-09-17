@@ -16,6 +16,7 @@ pytest-cov==2.12.1
 celery==4.4.7
 redis==3.5.3
 aiofiles
+Pillow
 
 # dev
 pytest==6.2.3
