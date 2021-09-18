@@ -6,6 +6,7 @@
 - Docker
 - Pytest
 - GINO (not) ORM
+- Alembic
 
 **Demo:**
 

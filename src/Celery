@@ -11,9 +11,4 @@ RUN pip install --upgrade pip  setuptools wheel \
     && pip install -r /usr/src/app/requirements.txt \
     && rm -rf /root/.cache/pip
 
-COPY entrypoint.sh .
-RUN chmod +x entrypoint.sh
-
 COPY . ./
-
-#ENTRYPOINT ["sh","/usr/src/app/entrypoint.sh"]

@@ -3,7 +3,9 @@ version: "3.3"
 services:
   web:
     build: ./src
-#    command: uvicorn app.server:app --reload --host 0.0.0.0 --port 8000
+#      context: ./src
+#      dockerfile: Dockerfile
+    command: uvicorn app.server:app --reload --host 0.0.0.0 --port 8000
     volumes:
       - ./src/:/usr/src/app/
       - media:/usr/src/media/
@@ -27,14 +29,18 @@ services:
     command: -p 5432
 
   celery:
+    build:
+      context: ./src
+#      dockerfile: docker/celery/Dockerfile
     # TODO: use separate (maybe empty Dockerfile) to avoid build duplication
-    build: ./src
+    # build: ./src
     # ? celery use same build context as web container, so alembic upgrade head will be executed twice,
     # and (maybe) key duplication error will be raised
-    command: celery -A app.celery.worker worker --loglevel=info --logfile=app/logs/celery.log
+    command: celery -A app.celery.worker worker -Ofair --pool=gevent --concurrency=10 --loglevel=DEBUG --logfile=app/logs/celery.log
     # -Ofair --pool=gevent --concurrency=10
     volumes:
       - ./src:/usr/src/app/
+      - media:/usr/src/media/
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0

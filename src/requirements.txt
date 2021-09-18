@@ -17,6 +17,7 @@ celery==4.4.7
 redis==3.5.3
 aiofiles
 Pillow
+gevent
 
 # dev
 pytest==6.2.3

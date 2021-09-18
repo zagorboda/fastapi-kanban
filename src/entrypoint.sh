@@ -20,4 +20,4 @@ alembic upgrade head
 #  mkdir /usr/src/media/profile_pic
 #fi
 
-uvicorn app.server:app --reload --host 0.0.0.0 --port 8000
+#uvicorn app.server:app --reload --host 0.0.0.0 --port 8000
