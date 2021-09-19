@@ -8,7 +8,9 @@ from starlette.status import (
     HTTP_401_UNAUTHORIZED,
     HTTP_404_NOT_FOUND,
 )
+from fastapi.responses import FileResponse
 
+from app.core.config import PROFILE_PICTURE_PATH, MEDIA_PATH
 from app.db.repositories.users import user_repo
 from app.db.models import User
 from app.dependencies.auth import get_current_active_user
@@ -103,7 +105,7 @@ async def update_password(
     return {'message': 'Password updated'}
 
 
-@router.post("/upload_profile_picture")
+@router.post("/profile_picture")
 async def upload_profile_picture(file: UploadFile = File(...), current_user: User = Depends(get_current_active_user)):
     image_async_res_id = await upload_image(file=file, user=current_user)
 
@@ -112,10 +114,15 @@ async def upload_profile_picture(file: UploadFile = File(...), current_user: Use
     }
 
 
-@router.post("/delete_profile_picture")
+@router.delete("/profile_picture")
 async def delete_profile_picture(current_user: User = Depends(get_current_active_user)):
     image_async_res_id = await delete_image(user=current_user)
 
     return {
         'task_id': str(image_async_res_id)
     }
+
+
+@router.get("/{username}/profile_picture")
+async def get_profile_picture(username: str):
+    return FileResponse(f'{PROFILE_PICTURE_PATH}{username}.jpg')

@@ -47,6 +47,6 @@ def upload_image_task(*, file: str, username: str):
 
 @celery.task(name="delete_image_task", soft_time_limit=60)
 def delete_image_task(*, username: str):
-    return os.remove(f'{PROFILE_PICTURE_PATH}{username}.jpg')
+    os.remove(f'{PROFILE_PICTURE_PATH}{username}.jpg')
 
     return True
