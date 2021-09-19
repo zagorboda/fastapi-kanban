@@ -10,6 +10,7 @@ from starlette.status import (
 
 from app.core.config import PROFILE_PICTURE_PATH, MEDIA_PATH
 
+
 celery = Celery(__name__)
 celery.conf.broker_url = os.environ.get("CELERY_BROKER_URL", "redis://redis:6379")
 celery.conf.result_backend = os.environ.get("CELERY_RESULT_BACKEND", "redis://redis:6379")
@@ -42,3 +43,10 @@ def upload_image_task(*, file: str, username: str):
     img.save(f'{PROFILE_PICTURE_PATH}{username}.jpg')
 
     return username
+
+
+@celery.task(name="delete_image_task", soft_time_limit=60)
+def delete_image_task(*, username: str):
+    return os.remove(f'{PROFILE_PICTURE_PATH}{username}.jpg')
+
+    return True

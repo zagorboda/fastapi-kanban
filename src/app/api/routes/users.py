@@ -18,7 +18,7 @@ from app.schemes.token import AccessToken
 
 from app.celery.worker import send_sign_up_email
 
-from app.utils.upload_image import upload_image
+from app.utils.image_loading import upload_image, delete_image
 
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -103,9 +103,18 @@ async def update_password(
     return {'message': 'Password updated'}
 
 
-@router.post("/upload_file/")
-async def create_upload_file(file: UploadFile = File(...), current_user: User = Depends(get_current_active_user)):
+@router.post("/upload_profile_picture")
+async def upload_profile_picture(file: UploadFile = File(...), current_user: User = Depends(get_current_active_user)):
     image_async_res_id = await upload_image(file=file, user=current_user)
+
+    return {
+        'task_id': str(image_async_res_id)
+    }
+
+
+@router.post("/delete_profile_picture")
+async def delete_profile_picture(current_user: User = Depends(get_current_active_user)):
+    image_async_res_id = await delete_image(user=current_user)
 
     return {
         'task_id': str(image_async_res_id)
