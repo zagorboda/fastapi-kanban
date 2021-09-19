@@ -5,7 +5,7 @@
 #done;
 
 # TODO: find cause of key duplication error
-alembic upgrade head
+#alembic upgrade head
 
 #FIRST_CONTAINER_START="/usr/FIRST_CONTAINER_START"
 #if [ ! -e $FIRST_CONTAINER_START ]; then

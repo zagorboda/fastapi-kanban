@@ -14,6 +14,8 @@ VERSION = "1.0.0"
 API_PREFIX = "/api"
 BASE_URL = 'http://127.0.0.1:8000'
 
+MEDIA_PATH = '/usr/src/media/'
+PROFILE_PICTURE_PATH = '/usr/src/media/profile_pic/'
 
 # openssl rand -hex 32
 SECRET_KEY = config("SECRET_KEY", cast=Secret, default=None)

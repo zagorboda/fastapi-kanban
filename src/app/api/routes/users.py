@@ -105,6 +105,8 @@ async def update_password(
 
 @router.post("/upload_file/")
 async def create_upload_file(file: UploadFile = File(...), current_user: User = Depends(get_current_active_user)):
-    await upload_image(file=file, user=current_user)
+    image_async_res_id = await upload_image(file=file, user=current_user)
 
-    return {'message': 'Image uploaded'}
+    return {
+        'task_id': str(image_async_res_id)
+    }
